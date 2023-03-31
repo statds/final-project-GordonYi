@@ -6,13 +6,32 @@ jupyter: python3
 
 Since the world is now on the rising period of debt cycle, we want to learn about the which are the demographic factors that influence the credit default.
 
-Here we have a Taiwan dataset just before financial crisis, which contains 30000 data points and about 20 features, and we want to learn about what demographic factors predict the probability of credit default has maximum efficiency.
+Here we have a Taiwan dataset just before financial crisis, which contains 30000 data points and about 20 features, and we want to learn about what demographic factors 
+predict the probability of credit default has maximum efficiency.
 
-In 2006, more than 9 million people in Taiwan had at least one credit or cash card. Credit cards are used for consumption, and cash cards are used to withdraw cash, but no matter whether it is a credit card or a cash card, if the money is not repaid after the due date, high interest will be charged and accumulated. Under the interest rate of 15% to 18%, a loan of 1 million will become 2 million in just three and a half years.
+In 2006, more than 9 million people in Taiwan had at least one credit or cash card. Credit cards are used for consumption, and cash cards are used to withdraw cash, 
+but no matter whether it is a credit card or a cash card, if the money is not repaid after the due date, high interest will be charged and accumulated. Under the 
+interest rate of 15% to 18%, a loan of 1 million will become 2 million in just three and a half years.
 
-Some people in Taiwan can't afford it for a while, so they "tear down the east wall to make up for the west wall", apply for multiple cards, and use one card to pay the other card. Last year, the number of dual cards on the island quadrupled to 45.55 million. But this is a deeper trap. According to news reports, a person had 8 cash cards and 5 credit cards. Although his monthly salary was more than 40,000 yuan, he was in debt of nearly 800,000 yuan. He was unable to extricate himself from the debt and became a "card slave."
+Some people in Taiwan can't afford it for a while, so they "tear down the east wall to make up for the west wall", apply for multiple cards, and use one card to pay 
+the other card. Last year, the number of dual cards on the island quadrupled to 45.55 million. But this is a deeper trap. According to news reports, a person had 8 
+cash cards and 5 credit cards. Although his monthly salary was more than 40,000 yuan, he was in debt of nearly 800,000 yuan. He was unable to extricate himself from 
+the debt and became a "card slave."
 
-According to the data of Taiwan's Financial Supervisory Commission as of the end of August 2005, the number of "card slaves" in Taiwan reached 400,000, and the average amount of arrears was 600,000 yuan. In 2007, half a year later, some Taiwan bankers estimate that this figure has approached 700,000, and the average amount owed is as high as 1.2 million yuan.
+Taiwan's government is considering an interest rate cap on unsecured consumer lending, in a move experts warn could worsen a simmering credit card loan crisis on the 
+island.
+
+The ministry of justice yesterday said it planned to propose capping rates on credit card loans at 8 percentage points above the average savings rate a step that would 
+lower rates from 20 per cent at present to about 12 per cent.
+
+Consumer lending operations at many Taiwanese banks have slipped into the red during the past few months after some placed rapid expansion above risk management in a 
+fight for market share.
+
+The largest lenders in the sector, Taishin Bank and Chinatrust Bank, wrote off 27 per cent and 15 per cent respectively of their card loans in January.
+
+According to the data of Taiwan's Financial Supervisory Commission as of the end of August 2005, the number of "card slaves" in Taiwan reached 400,000, and the average 
+amount of arrears was 600,000 yuan. In 2007, half a year later, some Taiwan bankers estimate that this figure has approached 700,000, and the average amount owed is as 
+high as 1.2 million yuan.
 
 This is the 2006 Taiwan credit crisis. Since we don't want it happend again, we are going to analysis the data to prevent bad things happend.
 
@@ -21,7 +40,8 @@ payment, and bill statements of credit card clients in Taiwan from April 2005 to
 
 **Specific aims:**
 
-We want to learn about what demographic factors predict the probability of credit default has maximum efficiency, and give out some suggestions to avoid huge impact of financial crisis.
+We want to learn about what demographic factors predict the probability of credit default has maximum efficiency, and give out some suggestions to avoid huge impact of 
+financial crisis.
 
 **Data Description:**
 
@@ -39,7 +59,8 @@ There are 25 different variables inside the dataset:
 
 • AGE: Age in years
 
-• PAY_0: Repayment status in September, 2005 (-1=pay duly, 1=payment delay for one month, 2=payment delay for two months, ... 8=payment delay for eight months, 9=payment delay for nine months and above) 
+• PAY_0: Repayment status in September, 2005 (-1=pay duly, 1=payment delay for one month, 2=payment delay for two months, ... 8=payment delay for eight months, 
+9=payment delay for nine months and above) 
 
 • PAY_2: Repayment status in August, 2005 (scale same as above) 
 
@@ -85,13 +106,16 @@ There are 25 different variables inside the dataset:
 
 3.	What is the correlation coefficient between variables and credit default? If necessary, should we ignore some of those factors?
 
-4.	Use Random Forest, Support Vector, Logistic Regression, Naïve Bayesian, Nearest Neighborhood to give the prediction of credit default. Why some of those predictions are more precise than others?
+4.	Use Random Forest, Support Vector, Logistic Regression, Naïve Bayesian, Nearest Neighborhood to give the prediction of credit default. Why some of those 
+5.	predictions are more precise than others?
 
 **Discussion:**
 
-So I think there will be some factors that is useful for the prediction and some are not so I may use some methods(like forward/backward selection or some other methods) to choose some of those factors and do the machine learning algorithms.
+So I think there will be some factors that is useful for the prediction and some are not so I may use some methods(like forward/backward selection or some other 
+methods) to choose some of those factors and do the machine learning algorithms.
 
-There are also time difference in the dataset --- there might be some difference in historical backgrounds for those months. So I may try find out a way to deal with the time issue
+There are also time difference in the dataset --- there might be some difference in historical backgrounds for those months. So I may try find out a way to deal with 
+the time issue
     
     
 
@@ -100,5 +124,11 @@ There are also time difference in the dataset --- there might be some difference
 There is an old saying in China: “夫以铜为镜，可以正衣冠；以史为镜，可以知兴替”
 
 We should learn from history, and try to make a brighter future.
+
+**Reference:**
+
+
+  Kathrin Hille in Taipei. (2006). FT.com site : Taiwan considers capping credit card lending rates. Ft.com, 1–.
+
 
 
