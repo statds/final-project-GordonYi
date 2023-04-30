@@ -1,0 +1,573 @@
+---
+jupyter: python3
+---
+
+```{python}
+from mpl_toolkits.mplot3d import Axes3D
+from sklearn.preprocessing import StandardScaler
+import matplotlib.pyplot as plt 
+import numpy as np 
+import os 
+import pandas as pd 
+import seaborn as sns
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression, RidgeClassifier
+from sklearn.metrics import accuracy_score,classification_report,confusion_matrix,mean_squared_error
+import warnings
+warnings.filterwarnings('ignore')
+%matplotlib inline
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import matplotlib.colors as colors
+from sklearn.utils import resample
+from sklearn.model_selection import *
+from sklearn.preprocessing import *
+from sklearn.metrics import *
+from sklearn.svm import SVC
+from sklearn.decomposition import PCA
+```
+
+```{python}
+df1 = pd.read_csv('credit_data.csv', delimiter=',')
+df1.dataframeName = 'credit_data.csv'
+nRow, nCol = df1.shape
+print(f'There are {nRow} rows and {nCol} columns')
+```
+
+```{python}
+print(df1.shape)
+df1.head().transpose()
+```
+
+```{python}
+counts = df1['default payment next month'].value_counts()
+print(counts)
+```
+
+```{python}
+df1.info()
+```
+
+```{python}
+defaulters = df1.copy()
+defaulters.rename(columns={'default_payment_next_month':'def_pay'}, inplace=True)
+defaulters.rename(columns={'PAY_0':'PAY_1'}, inplace=True)
+```
+
+```{python}
+defaulters.info()
+```
+
+```{python}
+defaulters.isna().sum() 
+```
+
+```{python}
+defaulters.head(50)
+```
+
+```{python}
+defaulters['Credit_Score'] = 500
+for i in range(2, 7):
+    defaulters['Credit_Score'] -= 10 * (defaulters[f'PAY_{i}'] > 0)
+    
+```
+
+```{python}
+def_cnt = (defaulters['default payment next month'].value_counts(normalize=True)*100)
+def_cnt.plot.bar(figsize=(6,6))
+plt.xticks(fontsize=12, rotation=0)
+plt.yticks(fontsize=12)
+plt.title("Probability Of Defaulting Payment Next Month", fontsize=15)
+for x,y in zip([0,1],def_cnt):
+    plt.text(x,y,y,fontsize=12)
+plt.show()
+```
+
+```{python}
+plt.subplots(figsize=(20,5))
+plt.subplot(121)
+sns.distplot(defaulters.LIMIT_BAL)
+plt.subplot(122)
+sns.distplot(defaulters.AGE)
+plt.show()
+```
+
+```{python}
+bins = [20,30,40,50,60,70,80]
+names = ['21-30','31-40','41-50','51-60','61-70','71-80']
+defaulters['AGE_BIN'] = pd.cut(x=defaulters.AGE, bins=bins, labels=names, right=True)
+
+age_cnt = defaulters.AGE_BIN.value_counts()
+age_0 = (defaulters.AGE_BIN[defaulters['default payment next month'] == 0].value_counts())
+age_1 = (defaulters.AGE_BIN[defaulters['default payment next month'] == 1].value_counts())
+
+plt.subplots(figsize=(8,5))
+plt.bar(age_0.index, age_0.values, label='0')
+plt.bar(age_1.index, age_1.values, label='1')
+for x,y in zip(names,age_0):
+    plt.text(x,y,y,fontsize=12)
+for x,y in zip(names,age_1):
+    plt.text(x,y,y,fontsize=12)
+plt.xticks(fontsize=12)
+plt.yticks(fontsize=12)
+plt.title("Number of clients in each age group", fontsize=15)
+plt.legend(loc='upper right', fontsize=15)
+plt.show()
+```
+
+```{python}
+defaulters.rename(columns={'default.payment.next.month':'def_pay'}, inplace=True)
+defaulters.rename(columns={'PAY_0':'PAY_1'}, inplace=True)
+```
+
+```{python}
+plt.subplots(figsize=(20,10))
+
+ind = sorted(defaulters.PAY_1.unique())
+pay_0 = (defaulters.PAY_1[defaulters['default payment next month'] == 0].value_counts(normalize=True))
+pay_1 = (defaulters.PAY_1[defaulters['default payment next month'] == 1].value_counts(normalize=True))
+total = pay_0.values+pay_1.values
+pay_0_prop = np.true_divide(pay_0, total)*100
+pay_1_prop = np.true_divide(pay_1, total)*100
+plt.subplot(231)
+plt.bar(ind, pay_1_prop, bottom=pay_0_prop, label='1')
+plt.bar(ind, pay_0_prop, label='0')
+plt.title("Repayment Status M-0", fontsize=15)
+
+ind = sorted(defaulters.PAY_2.unique())
+pay_0 = (defaulters.PAY_2[defaulters['default payment next month'] == 0].value_counts(normalize=True))
+pay_1 = (defaulters.PAY_2[defaulters['default payment next month'] == 1].value_counts(normalize=True))
+for i in pay_0.index:
+        if i not in pay_1.index:
+            pay_1[i]=0
+total = pay_0.values+pay_1.values
+pay_0_prop = np.true_divide(pay_0, total)*100
+pay_1_prop = np.true_divide(pay_1, total)*100
+plt.subplot(232)
+plt.bar(ind, pay_1_prop, bottom=pay_0_prop, label='1')
+plt.bar(ind, pay_0_prop, label='0')
+plt.title("Repayment Status M-1", fontsize=15)
+
+ind = sorted(defaulters.PAY_3.unique())
+pay_0 = (defaulters.PAY_3[defaulters['default payment next month'] == 0].value_counts(normalize=True))
+pay_1 = (defaulters.PAY_3[defaulters['default payment next month'] == 1].value_counts(normalize=True))
+for i in pay_0.index:
+    if i not in pay_1.index:
+        pay_1[i]=0
+total = pay_0.values+pay_1.values
+pay_0_prop = np.true_divide(pay_0, total)*100
+pay_1_prop = np.true_divide(pay_1, total)*100
+plt.subplot(233)
+plt.bar(ind, pay_1_prop, bottom=pay_0_prop, label='1')
+plt.bar(ind, pay_0_prop, label='0')
+plt.title("Repayment Status M-2", fontsize=15)
+
+ind = sorted(defaulters.PAY_4.unique())
+pay_0 = (defaulters.PAY_4[defaulters['default payment next month'] == 0].value_counts(normalize=True))
+pay_1 = (defaulters.PAY_4[defaulters['default payment next month'] == 1].value_counts(normalize=True))
+for i in pay_0.index:
+    if i not in pay_1.index:
+        pay_1[i]=0
+total = pay_0.values+pay_1.values
+pay_0_prop = np.true_divide(pay_0, total)*100
+pay_1_prop = np.true_divide(pay_1, total)*100
+plt.subplot(234)
+plt.bar(ind, pay_1_prop, bottom=pay_0_prop, label='1')
+plt.bar(ind, pay_0_prop, label='0')
+plt.title("Repayment Status M-3", fontsize=15)
+
+ind = sorted(defaulters.PAY_5.unique())
+pay_0 = (defaulters.PAY_5[defaulters['default payment next month'] == 0].value_counts(normalize=True))
+pay_1 = (defaulters.PAY_5[defaulters['default payment next month'] == 1].value_counts(normalize=True))
+for i in pay_0.index:
+    if i not in pay_1.index:
+        pay_1[i]=0
+for i in pay_1.index:
+    if i not in pay_0.index:
+        pay_0[i]=0
+total = pay_0.values+pay_1.values
+pay_0_prop = np.true_divide(pay_0, total)*100
+pay_1_prop = np.true_divide(pay_1, total)*100
+plt.subplot(235)
+plt.bar(ind, pay_1_prop, bottom=pay_0_prop, label='1')
+plt.bar(ind, pay_0_prop, label='0')
+plt.title("Repayment Status M-4", fontsize=15)
+ind = sorted(defaulters.PAY_6.unique())
+pay_0 = (defaulters.PAY_6[defaulters['default payment next month'] == 0].value_counts(normalize=True))
+pay_1 = (defaulters.PAY_6[defaulters['default payment next month'] == 1].value_counts(normalize=True))
+for i in pay_0.index:
+    if i not in pay_1.index:
+        pay_1[i]=0
+for i in pay_1.index:
+    if i not in pay_0.index:
+        pay_0[i]=0
+total = pay_0.values+pay_1.values
+pay_0_prop = np.true_divide(pay_0, total)*100
+pay_1_prop = np.true_divide(pay_1, total)*100
+plt.subplot(236)
+plt.bar(ind, pay_1_prop, bottom=pay_0_prop, label='1')
+plt.bar(ind, pay_0_prop, label='0')
+plt.title("Repayment Status M-5", fontsize=15)
+
+plt.xticks(ind, fontsize=12)
+plt.yticks(fontsize=12)
+plt.legend(loc="upper right", fontsize=15)
+plt.suptitle("Repayment Status for last 6 months with proportion of defaulting payment next month", fontsize=20)
+plt.show()
+```
+
+```{python}
+g = sns.FacetGrid(defaulters, row='default payment next month', col='MARRIAGE')
+g = g.map(plt.hist, 'AGE')
+plt.show()
+```
+
+```{python}
+g = sns.FacetGrid(defaulters, row='default payment next month', col='SEX')
+g = g.map(plt.hist, 'AGE')
+```
+
+```{python}
+plt.subplots(figsize=(20,10))
+
+plt.subplot(231)
+plt.scatter(x=defaulters.PAY_AMT1, y=defaulters.BILL_AMT1, c='r', s=1)
+
+plt.subplot(232)
+plt.scatter(x=defaulters.PAY_AMT2, y=defaulters.BILL_AMT2, c='b', s=1)
+
+plt.subplot(233)
+plt.scatter(x=defaulters.PAY_AMT3, y=defaulters.BILL_AMT3, c='g', s=1)
+
+plt.subplot(234)
+plt.scatter(x=defaulters.PAY_AMT4, y=defaulters.BILL_AMT4, c='c', s=1)
+plt.ylabel("Bill Amount in past 6 months", fontsize=25)
+
+plt.subplot(235)
+plt.scatter(x=defaulters.PAY_AMT5, y=defaulters.BILL_AMT5, c='y', s=1)
+plt.xlabel("Payment in past 6 months", fontsize=25)
+
+plt.subplot(236)
+plt.scatter(x=defaulters.PAY_AMT6, y=defaulters.BILL_AMT6, c='m', s=1)
+
+plt.show()
+```
+
+```{python}
+y1 = defaulters.MARRIAGE[defaulters["default payment next month"] == 0]
+y2 = defaulters.MARRIAGE[defaulters["default payment next month"] == 1]
+x1 = defaulters.LIMIT_BAL[defaulters["default payment next month"] == 0]
+x2 = defaulters.LIMIT_BAL[defaulters["default payment next month"] == 1]
+
+fig,ax = plt.subplots(figsize=(20,10))
+plt.scatter(x1,y1, color="r", marker="*", label='0')
+plt.scatter(x2,y2, color="b", marker=".", label='1')
+plt.xlabel("LIMITING BALANCE", fontsize=20)
+plt.ylabel("EDUCATION", fontsize=20)
+plt.xticks(fontsize=15)
+plt.yticks(fontsize=15)
+plt.legend(loc='upper right', fontsize=20)
+plt.show()
+```
+
+```{python}
+plt.subplots(figsize=(30,20))
+sns.heatmap(defaulters.corr(), annot=True)
+plt.show()
+```
+
+```{python}
+k = 10 
+corrmat = defaulters.corr()
+cols = corrmat.nlargest(k, 'default payment next month')['default payment next month'].index
+cm = np.corrcoef(defaulters[cols].values.T)
+sns.set(font_scale=1.25)
+plt.subplots(figsize=(10,10))
+hm = sns.heatmap(cm, cbar=True, annot=True, square=True, fmt='.2f', annot_kws={'size': 10}, yticklabels=cols.values, xticklabels=cols.values)
+plt.show()
+```
+
+```{python}
+df_X = defaulters.drop(['default payment next month','AGE_BIN'], axis=1)
+df_y = defaulters['default payment next month']
+
+X_train, X_test, y_train, y_test = train_test_split(df_X, df_y, test_size=1, random_state=10)
+
+scaler = StandardScaler()
+X_train_scale = scaler.fit_transform(X_train)
+X_test_scale = scaler.transform(X_test)
+X_train = pd.DataFrame(X_train_scale, columns = X_train.columns)
+X_test = pd.DataFrame(X_test_scale, columns = X_test.columns)
+```
+
+```{python}
+plt.subplots(figsize=(20,10))
+
+plt.subplot(231)
+plt.scatter(x=X_train.PAY_AMT1, y=X_train.BILL_AMT1, c='r', s=1)
+
+plt.subplot(232)
+plt.scatter(x=X_train.PAY_AMT2, y=X_train.BILL_AMT2, c='b', s=1)
+
+plt.subplot(233)
+plt.scatter(x=X_train.PAY_AMT3, y=X_train.BILL_AMT3, c='g', s=1)
+
+plt.subplot(234)
+plt.scatter(x=X_train.PAY_AMT4, y=X_train.BILL_AMT4, c='c', s=1)
+plt.ylabel("Bill Amount in past 6 months", fontsize=25)
+
+plt.subplot(235)
+plt.scatter(x=X_train.PAY_AMT5, y=X_train.BILL_AMT5, c='y', s=1)
+plt.xlabel("Payment in past 6 months", fontsize=25)
+
+plt.subplot(236)
+plt.scatter(x=X_train.PAY_AMT6, y=X_train.BILL_AMT6, c='m', s=1)
+
+plt.show()
+```
+
+```{python}
+defaulters.SEX = defaulters.SEX.astype("category")
+defaulters.EDUCATION = defaulters.EDUCATION.astype("category")
+defaulters.MARRIAGE = defaulters.MARRIAGE.astype("category")
+defaulters.PAY_1 = defaulters.PAY_1.astype("category")
+defaulters.PAY_2 = defaulters.PAY_2.astype("category")
+defaulters.PAY_3 = defaulters.PAY_3.astype("category")
+defaulters.PAY_4 = defaulters.PAY_4.astype("category")
+defaulters.PAY_5 = defaulters.PAY_5.astype("category")
+defaulters.PAY_6 = defaulters.PAY_6.astype("category")
+defaulters.def_type = defaulters['default payment next month'].astype("category")
+```
+
+```{python}
+df_X = defaulters.drop(['default payment next month','AGE_BIN'], axis=1)
+df_y = defaulters['default payment next month']
+
+X_train, X_test, y_train, y_test = train_test_split(df_X, df_y, test_size=0.5, random_state=10)
+
+model2 = LogisticRegression()
+model2.fit(X_train, y_train)
+
+y_pred = model2.predict(X_test)
+
+print(classification_report(y_pred, y_test))
+print(confusion_matrix(y_pred, y_test))
+print('\nAccuracy Score for model2: ', accuracy_score(y_pred,y_test))
+```
+
+```{python}
+df_X = defaulters.drop(['default payment next month','AGE_BIN','PAY_2','PAY_3','PAY_4','PAY_5','PAY_6'], axis=1)
+df_y = defaulters['default payment next month']
+
+X_train, X_test, y_train, y_test = train_test_split(df_X, df_y, test_size=0.5, random_state=10)
+
+model3 = LogisticRegression()
+model3.fit(X_train, y_train)
+
+y_pred = model3.predict(X_test)
+
+print(classification_report(y_pred, y_test))
+print(confusion_matrix(y_pred, y_test))
+print('\nAccuracy Score for model3: ', accuracy_score(y_pred,y_test))
+```
+
+```{python}
+df_X = defaulters[['SEX','MARRIAGE','AGE','BILL_AMT1','EDUCATION','PAY_1']]
+df_y = defaulters['default payment next month']
+
+X_train, X_test, y_train, y_test = train_test_split(df_X, df_y, test_size=0.5, random_state=20)
+
+model4 = LogisticRegression()
+model4.fit(X_train, y_train)
+
+y_pred = model4.predict(X_test)
+y_train_pred = model4.predict(X_train)
+
+print(classification_report(y_pred, y_test))
+print(confusion_matrix(y_pred, y_test))
+print('\nTest Accuracy Score for model4: ', accuracy_score(y_pred,y_test))
+print('\nTrain Accuracy Score for model4: ', accuracy_score(y_train_pred,y_train))
+```
+
+```{python}
+df_X = defaulters[['SEX','MARRIAGE','AGE','BILL_AMT1','EDUCATION','PAY_1']]
+df_y = defaulters['default payment next month']
+
+X_train, X_test, y_train, y_test = train_test_split(df_X, df_y, test_size=0.5, random_state=20)
+
+model5 = RidgeClassifier()
+model5.fit(X_train, y_train)
+
+y_pred = model5.predict(X_test)
+y_train_pred = model5.predict(X_train)
+
+print(classification_report(y_pred, y_test))
+print(confusion_matrix(y_pred, y_test))
+print('\nTest Accuracy Score for model5: ', accuracy_score(y_pred,y_test))
+print('\nTrain Accuracy Score for model5: ', accuracy_score(y_train_pred,y_train))
+```
+
+```{python}
+from sklearn.neighbors import KNeighborsClassifier
+kn=KNeighborsClassifier()
+kn.fit(X_train,y_train)
+y_pred_kn=kn.predict(X_test)
+print(classification_report(y_test,y_pred_kn))
+print(confusion_matrix(y_test,y_pred_kn))
+print('\nTest Accuracy Score for model6: ', accuracy_score(y_test,y_pred_kn))
+```
+
+```{python}
+from sklearn.ensemble import RandomForestClassifier
+rf=RandomForestClassifier()
+rf.fit(X_train,y_train)
+y_pred_rf=rf.predict(X_test)
+print(classification_report(y_test,y_pred_rf))
+print(confusion_matrix(y_test,y_pred_rf))
+print('\nTest Accuracy Score for model7: ', accuracy_score(y_test,y_pred_kn))
+```
+
+```{python}
+defaulters['Credit_Score'] = 1000
+defaulters.loc[defaulters['PAY_1'] == -2, 'Credit_Score'] += 30
+defaulters.loc[defaulters['PAY_1'] == -1, 'Credit_Score'] += 20
+defaulters.loc[defaulters['PAY_1'] == 1, 'Credit_Score'] -= 30
+defaulters.loc[defaulters['PAY_1'] == 2, 'Credit_Score'] -= 70
+defaulters.loc[defaulters['PAY_1'] == 3, 'Credit_Score'] -= 120
+defaulters.loc[defaulters['PAY_1'] == 4, 'Credit_Score'] -= 180
+defaulters.loc[defaulters['PAY_1'] == 5, 'Credit_Score'] -= 240
+defaulters.loc[defaulters['PAY_1'] == 6, 'Credit_Score'] -= 310
+defaulters.loc[defaulters['PAY_1'] == 8, 'Credit_Score'] -= 390
+defaulters.loc[defaulters['PAY_1'] == 9, 'Credit_Score'] -= 480
+defaulters.loc[defaulters['PAY_2'] == -2, 'Credit_Score'] += 30
+defaulters.loc[defaulters['PAY_2'] == -1, 'Credit_Score'] += 20
+defaulters.loc[defaulters['PAY_2'] == 1, 'Credit_Score'] -= 30
+defaulters.loc[defaulters['PAY_2'] == 2, 'Credit_Score'] -= 70
+defaulters.loc[defaulters['PAY_2'] == 3, 'Credit_Score'] -= 120
+defaulters.loc[defaulters['PAY_2'] == 4, 'Credit_Score'] -= 180
+defaulters.loc[defaulters['PAY_2'] == 5, 'Credit_Score'] -= 240
+defaulters.loc[defaulters['PAY_2'] == 6, 'Credit_Score'] -= 310
+defaulters.loc[defaulters['PAY_2'] == 8, 'Credit_Score'] -= 390
+defaulters.loc[defaulters['PAY_2'] == 9, 'Credit_Score'] -= 480
+defaulters.loc[defaulters['PAY_3'] == -1, 'Credit_Score'] += 30
+defaulters.loc[defaulters['PAY_3'] == -1, 'Credit_Score'] += 20
+defaulters.loc[defaulters['PAY_3'] == 1, 'Credit_Score'] -= 30
+defaulters.loc[defaulters['PAY_3'] == 2, 'Credit_Score'] -= 70
+defaulters.loc[defaulters['PAY_3'] == 3, 'Credit_Score'] -= 120
+defaulters.loc[defaulters['PAY_3'] == 4, 'Credit_Score'] -= 180
+defaulters.loc[defaulters['PAY_3'] == 5, 'Credit_Score'] -= 240
+defaulters.loc[defaulters['PAY_3'] == 6, 'Credit_Score'] -= 310
+defaulters.loc[defaulters['PAY_3'] == 8, 'Credit_Score'] -= 390
+defaulters.loc[defaulters['PAY_3'] == 9, 'Credit_Score'] -= 480
+defaulters.loc[defaulters['PAY_4'] == -2, 'Credit_Score'] += 30
+defaulters.loc[defaulters['PAY_4'] == -1, 'Credit_Score'] += 20
+defaulters.loc[defaulters['PAY_4'] == 1, 'Credit_Score'] -= 30
+defaulters.loc[defaulters['PAY_4'] == 2, 'Credit_Score'] -= 70
+defaulters.loc[defaulters['PAY_4'] == 3, 'Credit_Score'] -= 120
+defaulters.loc[defaulters['PAY_4'] == 4, 'Credit_Score'] -= 180
+defaulters.loc[defaulters['PAY_4'] == 5, 'Credit_Score'] -= 240
+defaulters.loc[defaulters['PAY_4'] == 6, 'Credit_Score'] -= 310
+defaulters.loc[defaulters['PAY_4'] == 8, 'Credit_Score'] -= 390
+defaulters.loc[defaulters['PAY_4'] == 9, 'Credit_Score'] -= 480
+defaulters.loc[defaulters['PAY_5'] == -2, 'Credit_Score'] += 30
+defaulters.loc[defaulters['PAY_5'] == -1, 'Credit_Score'] += 20
+defaulters.loc[defaulters['PAY_5'] == 1, 'Credit_Score'] -= 30
+defaulters.loc[defaulters['PAY_5'] == 2, 'Credit_Score'] -= 70
+defaulters.loc[defaulters['PAY_5'] == 3, 'Credit_Score'] -= 120
+defaulters.loc[defaulters['PAY_5'] == 4, 'Credit_Score'] -= 180
+defaulters.loc[defaulters['PAY_5'] == 5, 'Credit_Score'] -= 240
+defaulters.loc[defaulters['PAY_5'] == 6, 'Credit_Score'] -= 310
+defaulters.loc[defaulters['PAY_5'] == 8, 'Credit_Score'] -= 390
+defaulters.loc[defaulters['PAY_5'] == 9, 'Credit_Score'] -= 480
+defaulters.loc[defaulters['PAY_6'] == -2, 'Credit_Score'] += 30
+defaulters.loc[defaulters['PAY_6'] == -1, 'Credit_Score'] += 20
+defaulters.loc[defaulters['PAY_6'] == 1, 'Credit_Score'] -= 30
+defaulters.loc[defaulters['PAY_6'] == 2, 'Credit_Score'] -= 70
+defaulters.loc[defaulters['PAY_6'] == 3, 'Credit_Score'] -= 120
+defaulters.loc[defaulters['PAY_6'] == 4, 'Credit_Score'] -= 180
+defaulters.loc[defaulters['PAY_6'] == 5, 'Credit_Score'] -= 240
+defaulters.loc[defaulters['PAY_6'] == 6, 'Credit_Score'] -= 310
+defaulters.loc[defaulters['PAY_6'] == 8, 'Credit_Score'] -= 390
+defaulters.loc[defaulters['PAY_6'] == 9, 'Credit_Score'] -= 480
+
+
+
+
+for index, row in defaulters.iterrows():
+    if (row['BILL_AMT1'] > 20000) and (row['PAY_1'] <= 0):
+        defaulters.at[index, 'Credit_Score'] += 10
+        if (row['BILL_AMT2'] > 20000) and (row['PAY_2'] <= 0):
+            defaulters.at[index, 'Credit_Score'] += 10
+            if (row['BILL_AMT3'] > 20000) and (row['PAY_3'] <= 0):
+                defaulters.at[index, 'Credit_Score'] += 10
+                if (row['BILL_AMT4'] > 20000) and (row['PAY_4'] <= 0):
+                    defaulters.at[index, 'Credit_Score'] += 10
+                    if (row['BILL_AMT5'] > 20000) and (row['PAY_5'] <= 0):
+                        defaulters.at[index, 'Credit_Score'] += 10
+                        if (row['BILL_AMT6'] > 20000) and (row['PAY_6'] <= 0):
+                            defaulters.at[index, 'Credit_Score'] += 10
+                            
+for index, row in defaulters.iterrows():
+    if (row['BILL_AMT1'] > 20000) and (row['PAY_AMT1'] > 15000):
+        defaulters.at[index, 'Credit_Score'] += 5
+        if (row['BILL_AMT2'] > 20000) and (row['PAY_AMT2'] > 15000):
+            defaulters.at[index, 'Credit_Score'] += 5
+            if (row['BILL_AMT3'] > 20000) and (row['PAY_AMT3'] > 15000):
+                defaulters.at[index, 'Credit_Score'] += 5
+                if (row['BILL_AMT4'] > 20000) and (row['PAY_AMT4'] > 15000):
+                    defaulters.at[index, 'Credit_Score'] += 5
+                    if (row['BILL_AMT5'] > 20000) and (row['PAY_AMT5'] > 15000):
+                        defaulters.at[index, 'Credit_Score'] += 5
+                        if (row['BILL_AMT6'] > 20000) and (row['PAY_AMT6'] > 15000):
+                            defaulters.at[index, 'Credit_Score'] += 5
+
+    
+    
+
+for index, row in defaulters.iterrows():
+    if row['BILL_AMT1'] or row['BILL_AMT2'] or row['BILL_AMT3'] or row['BILL_AMT4'] or row['BILL_AMT5'] or row['BILL_AMT6']> row['LIMIT_BAL'] * 0.8:
+        defaulters.at[index, 'Credit_Score'] -= 10
+
+for index, row in defaulters.iterrows():
+    if (row['LIMIT_BAL'] < 55000) and (row['AGE'] < 26):
+        defaulters.at[index, 'Credit_Score'] -=20
+
+for index, row in defaulters.iterrows():
+    if (row['LIMIT_BAL'] < 55000) and (row['EDUCATION'] == 1 or 2 or 3):
+        defaulters.at[index, 'Credit_Score'] -=20
+        
+        
+defaulters.head()
+```
+
+```{python}
+df_X = defaulters[['SEX','MARRIAGE','AGE','EDUCATION','Credit_Score','BILL_AMT1','PAY_1']]
+df_y = defaulters['default payment next month']
+
+
+X_train, X_test, y_train, y_test = train_test_split(df_X, df_y, test_size=0.5, random_state=20)
+
+rf=RandomForestClassifier()
+rf.fit(X_train,y_train)
+y_pred_rf=rf.predict(X_test)
+print(classification_report(y_test,y_pred_rf))
+print(confusion_matrix(y_test,y_pred_rf))
+print('\nTest Accuracy Score for model7: ', accuracy_score(y_test,y_pred_rf))
+```
+
+```{python}
+df_X = defaulters[['SEX','MARRIAGE','AGE','EDUCATION','BILL_AMT1','PAY_1']]
+df_y = defaulters['default payment next month']
+
+X_train, X_test, y_train, y_test = train_test_split(df_X, df_y, test_size=0.5, random_state=20)
+
+rf=RandomForestClassifier()
+rf.fit(X_train,y_train)
+y_pred_rf=rf.predict(X_test)
+print(classification_report(y_test,y_pred_rf))
+print(confusion_matrix(y_test,y_pred_rf))
+print('\nTest Accuracy Score for model7: ', accuracy_score(y_test,y_pred_rf))
+```
+
